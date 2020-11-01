@@ -4,7 +4,9 @@ name: build-and-push-docker-image
 # events but only for the master branch
 on:
   push:
-    branches: [ master ]
+    branches:
+    - master
+    - v2
   pull_request:
     branches: [ master ]
 
@@ -20,30 +22,20 @@ jobs:
     # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
     - uses: actions/checkout@v2
 
-    # Runs a single command using the runners shell
-    - name: Run a one-line script
-      run: echo Hello, world!
+    # Setup Buildx builder
+    - name: Setup Docker Buildx
+      uses: docker/setup-buildx-action@v1
 
-    - name: Build and push Docker images
-      uses: docker/build-push-action@v1.0
+    # Login
+    - name: Login to DockerHub
+      uses: docker/login-action@v1
       with:
-        # Username used to log in to a Docker registry. If not set then no login will occur
         username: ${{ secrets.DOCKER_USERNAME }}  
-        # Password or personal access token used to log in to a Docker registry. If not set then no login will occur
         password: ${{ secrets.DOCKER_TOKEN }}
-        # Docker repository to tag the image with
-        repository: ${{ secrets.DOCKER_USERNAME }}/vim-nightly
-        # Automatically tags the built image with the git reference as per the readme
-        tag_with_ref: true
-        # Automatically tags the built image with the git short SHA as per the readme
-        tag_with_sha: true
-        # Path to run docker build from
-        path: .
-        # Name of the Dockerfile (Default is 'path/Dockerfile')
-        dockerfile: Dockerfile
-        # Always attempt to pull a newer version of the image
-        always_pull: true
-        # Adds labels with git repository information to the built image
-        add_git_labels: true
-        # Whether to push the image
+
+    - name: Build and push
+      id: docker_build
+      uses: docker/build-push-action@v2
+      with:
         push: true
+        tags: ${{ secrets.DOCKER_USERNAME }}/redis:6.0
